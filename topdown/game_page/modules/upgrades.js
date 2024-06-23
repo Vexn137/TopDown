@@ -27,7 +27,8 @@ let UpgradeTrees = {
     ['Magazine']: new Tree(),
     ['Shield']: new Tree(),
     ['Multishoot']: new Tree(),
-    ['Strength']: new Tree()
+    ['Strength']: new Tree(),
+    ['Constitution']: new Tree()
 }
 
 // MOVEMENT UPGRADE
@@ -36,7 +37,7 @@ UpgradeTrees.Movement.Name = 'Movement';
 UpgradeTrees.Movement.Levels[1] = new Upgrade();
 UpgradeTrees.Movement.Levels[1].Tree = UpgradeTrees.Movement.Name;
 UpgradeTrees.Movement.Levels[1].Name = 'Haste';
-UpgradeTrees.Movement.Levels[1].Description = 'Gives +10% speed';
+UpgradeTrees.Movement.Levels[1].Description = '+10% Speed';
 UpgradeTrees.Movement.Levels[1].Activate = function(plr) {
   plr.Modifiers.Speed += 10;
 }
@@ -44,6 +45,54 @@ UpgradeTrees.Movement.Levels[1].Deactivate = function(plr) {
   plr.Modifiers.Speed -= 10;
 }
 UpgradeTrees.Movement.Levels[1].Step = function(self, plr) { }
+
+
+UpgradeTrees.Movement.Levels[2] = new Trait();
+UpgradeTrees.Movement.Levels[2].Tree = UpgradeTrees.Movement.Name;
+
+UpgradeTrees.Movement.Levels[2].Options[1] = new Upgrade();
+UpgradeTrees.Movement.Levels[2].Options[1].Tree = UpgradeTrees.Movement.Name;
+UpgradeTrees.Movement.Levels[2].Options[1].Name = 'Uninterrupted Shooting';
+UpgradeTrees.Movement.Levels[2].Options[1].Description = '+100% Walk Speed';
+UpgradeTrees.Movement.Levels[2].Options[1].Activate = function(plr) {
+  plr.Modifiers.WalkSpeed += 100;
+}
+UpgradeTrees.Movement.Levels[2].Options[1].Deactivate = function(plr) {
+  plr.Modifiers.WalkSpeed += 100;
+}
+UpgradeTrees.Movement.Levels[2].Options[1].Step = function(self, plr) { }
+
+UpgradeTrees.Movement.Levels[2].Options[2] = new Upgrade();
+UpgradeTrees.Movement.Levels[2].Options[2].Tree = UpgradeTrees.Movement.Name;
+UpgradeTrees.Movement.Levels[2].Options[2].Name = 'Nigerundayooooo';
+UpgradeTrees.Movement.Levels[2].Options[2].Description = '+80% Speed';
+UpgradeTrees.Movement.Levels[2].Options[2].Activate = function(plr) {
+  plr.Modifiers.Speed += 80;
+}
+UpgradeTrees.Movement.Levels[2].Options[2].Deactivate = function(plr) {
+  plr.Modifiers.Speed -= 80;
+}
+UpgradeTrees.Movement.Levels[2].Options[2].Step = function(self, plr) { }
+
+UpgradeTrees.Movement.Levels[2].Options[3] = new Upgrade();
+UpgradeTrees.Movement.Levels[2].Options[3].Tree = UpgradeTrees.Movement.Name;
+UpgradeTrees.Movement.Levels[2].Options[3].Name = 'Afraid flee';
+UpgradeTrees.Movement.Levels[2].Options[3].Description = 'Lower your health/n Higher your speed/n+10% Speed';
+UpgradeTrees.Movement.Levels[2].Options[3].Activate = function(plr) {
+  plr.FearSpeed = 0;
+  plr.Modifiers.Speed += 10;
+}
+UpgradeTrees.Movement.Levels[2].Options[3].Deactivate = function(plr) {
+  plr.FearSpeed = null;
+  plr.Modifiers.Speed -= 10;
+}
+UpgradeTrees.Movement.Levels[2].Options[3].Step = function(plr) {
+  let newFearSpeed = Math.floor(50*(1-(plr.Health/100)));
+
+  plr.Modifiers.Speed = plr.Modifiers.Speed + (newFearSpeed-plr.FearSpeed);
+  console.log(newFearSpeed, plr.Modifiers.Speed);
+  plr.FearSpeed = newFearSpeed;
+}
 
 // STRONG UPGRADE
 
@@ -66,31 +115,31 @@ UpgradeTrees.Strength.Levels[2].Tree = UpgradeTrees.Strength.Name;
 UpgradeTrees.Strength.Levels[2].Options[1] = new Upgrade();
 UpgradeTrees.Strength.Levels[2].Options[1].Tree = UpgradeTrees.Strength.Name;
 UpgradeTrees.Strength.Levels[2].Options[1].Name = 'Enormus Attack';
-UpgradeTrees.Strength.Levels[2].Options[1].Description = '+40% Projectile Size/n5% Projectile Speed';
+UpgradeTrees.Strength.Levels[2].Options[1].Description = '+100% Projectile Size/n10% Projectile Speed';
 UpgradeTrees.Strength.Levels[2].Options[1].Activate = function(plr) {
-  plr.Weapon.ProjectileConstructor.Modifiers.Size += 40;
-  plr.Weapon.ProjectileConstructor.Modifiers.Speed -= 5;
+  plr.Weapon.ProjectileConstructor.Modifiers.Size += 100;
+  plr.Weapon.ProjectileConstructor.Modifiers.Speed -= 10;
 }
 UpgradeTrees.Strength.Levels[2].Options[1].Deactivate = function(plr) {
-  plr.Weapon.ProjectileConstructor.Modifiers.Size -= 40;
-  plr.Weapon.ProjectileConstructor.Modifiers.Speed += 5;
+  plr.Weapon.ProjectileConstructor.Modifiers.Size -= 100;
+  plr.Weapon.ProjectileConstructor.Modifiers.Speed += 10;
 }
 UpgradeTrees.Strength.Levels[2].Options[1].Step = function(self, plr) { }
 
 UpgradeTrees.Strength.Levels[2].Options[2] = new Upgrade();
 UpgradeTrees.Strength.Levels[2].Options[2].Tree = UpgradeTrees.Strength.Name;
-UpgradeTrees.Strength.Levels[2].Options[2].Name = 'Sniper Accuracy';
-UpgradeTrees.Strength.Levels[2].Options[2].Description = '-5 Spread/n-15% Projectile Size/n+15% Damage/n+15% Projectile Speed';
+UpgradeTrees.Strength.Levels[2].Options[2].Name = 'Sniper';
+UpgradeTrees.Strength.Levels[2].Options[2].Description = '-20% Projectile Size/n+15% Damage/n+15% Projectile Speed';
 UpgradeTrees.Strength.Levels[2].Options[2].Activate = function(plr) {
   plr.Weapon.Spread -= 5;
   plr.Weapon.ProjectileConstructor.Modifiers.Damage += 15;
-  plr.Weapon.ProjectileConstructor.Modifiers.Size -= 15;
+  plr.Weapon.ProjectileConstructor.Modifiers.Size -= 20;
   plr.Weapon.ProjectileConstructor.Modifiers.Speed += 15;
 }
 UpgradeTrees.Strength.Levels[2].Options[2].Deactivate = function(plr) {
   plr.Weapon.Spread += 5;
   plr.Weapon.ProjectileConstructor.Modifiers.Damage -= 15;
-  plr.Weapon.ProjectileConstructor.Modifiers.Size += 15;
+  plr.Weapon.ProjectileConstructor.Modifiers.Size += 20;
   plr.Weapon.ProjectileConstructor.Modifiers.Speed -= 15;
 }
 UpgradeTrees.Strength.Levels[2].Options[2].Step = function(self, plr) { }
@@ -98,12 +147,14 @@ UpgradeTrees.Strength.Levels[2].Options[2].Step = function(self, plr) { }
 UpgradeTrees.Strength.Levels[2].Options[3] = new Upgrade();
 UpgradeTrees.Strength.Levels[2].Options[3].Tree = UpgradeTrees.Strength.Name;
 UpgradeTrees.Strength.Levels[2].Options[3].Name = 'Heavy Arsenal';
-UpgradeTrees.Strength.Levels[2].Options[3].Description = '+15% Damage/n+15% Knockback';
+UpgradeTrees.Strength.Levels[2].Options[3].Description = '+20% Damage/n+100% Knockback';
 UpgradeTrees.Strength.Levels[2].Options[3].Activate = function(plr) {
-  plr.Weapon.ProjectileConstructor.Modifiers.Damage += 15;
+  plr.Weapon.ProjectileConstructor.Modifiers.Damage += 20;
+  plr.Weapon.ProjectileConstructor.Modifiers.Knockback += 100;
 }
 UpgradeTrees.Strength.Levels[2].Options[3].Deactivate = function(plr) {
-  plr.Weapon.ProjectileConstructor.Modifiers.Damage -= 15;
+  plr.Weapon.ProjectileConstructor.Modifiers.Damage -= 20;
+  plr.Weapon.ProjectileConstructor.Modifiers.Knockback += 100;
 }
 UpgradeTrees.Strength.Levels[2].Options[3].Step = function(self, plr) { }
 

@@ -122,10 +122,12 @@ function loadDict(dict, path) {
 loadDict(loadedImages, 'assets/');
 
 function spawnCards(amount = 3) {
+  const spacing = 100*2.5;
 
-  for (let i = 0; i < amount; i++) {
+  for (let i = 1; i < amount+1; i++) {
     let cd = new CardItem();
-    cd.Position = new THREE.Vector2(i*250 - 250, 0);
+    cd.Position = new THREE.Vector2(spacing*i - (amount+1)*spacing/2, 150);
+    cd.Alpha = 0;
   
     cd.SetUpgrade(cd);
     Game.Gui.Cards.push(cd);
@@ -174,6 +176,8 @@ function CardItem() {
   this.State = '';
   this.AnimationTick = 0;
 
+  this.Alpha = 1;
+
   this.Step = function(self) {
     if (self.Size.width < 0) {
       self.Texture = loadedImages.cards.back;
@@ -183,19 +187,21 @@ function CardItem() {
     if (self.State == 'Discard') {
       self.AnimationTick = self.AnimationTick+Game.DeltaTime;
 
-      if (self.AnimationTick > 1) {
+      self.Alpha = lerp(self.Alpha, 0, .05);
+      if (self.AnimationTick > .8) {
         self.Size.lerp(new THREE.Vector2(-100, 162).multiplyScalar(0), .1);
       } else {
-        self.Position.lerp(new THREE.Vector2(self.Position.x, 750), .05);
+        self.Position.lerp(new THREE.Vector2(self.Position.x, 250), .05);
         self.Size.lerp(new THREE.Vector2(-100, 162).multiplyScalar(1.5), .05);
       }
 
     } else if (self.State == 'Selected') {
       self.AnimationTick = self.AnimationTick+Game.DeltaTime;
-      if (self.AnimationTick > 1.3) {
+      if (self.AnimationTick > 1) {
         Game.Gui.Cards = [];
-      } else if (self.AnimationTick > 1) {
-        self.Position.lerp(new THREE.Vector2(self.Position.x, 500), .1);
+      } else if (self.AnimationTick > .8) {
+        self.Alpha = lerp(self.Alpha, 0, .1);
+        self.Position.lerp(new THREE.Vector2(self.Position.x, 500), .115);
         self.Size.lerp(new THREE.Vector2(-100, 162).multiplyScalar(0), .1);
       } else {
         self.Position.lerp(new THREE.Vector2(0, 0), .05);
@@ -203,6 +209,9 @@ function CardItem() {
       }
 
     } else {
+      self.Alpha = lerp(self.Alpha, 1, .075);
+      self.Position.lerp(new THREE.Vector2(self.Position.x, 0), .05);
+
       if (self.Hovering) { self.Revealed = true; }
       if (self.Revealed) {
         if (self.Hovering) {
@@ -228,12 +237,14 @@ function CardItem() {
       if (self.Revealed) {
         if (self.Upgrade.Class == 'Trait') {
           Game.Gui.Cards = [];
-  
+          const len = Object.keys(self.Upgrade.Options).length;
+          const spacing = 100*2.5;
+
           for(var key in self.Upgrade.Options) {
             var upg = self.Upgrade.Options[key];
             let c = new CardItem();
             c.SetUpgrade(c, upg);
-            c.Position = new THREE.Vector2(key*250 - 250, 0);
+            c.Position = new THREE.Vector2(spacing*key - (len+1)*spacing/2, 0);
             Game.Gui.Cards.push(c);
           }
         } else {
@@ -327,6 +338,9 @@ function LivingEntity() {
       self.Shields--;
       return;
     }
+    if (knockback) {
+      self.Velocity.add(knockback);
+    }
 
     self.Health = Math.max(self.Health-dmg, 0);
     self.HitFrame = 0.1;
@@ -389,7 +403,8 @@ function Player() {
   this.Weapon = new Weapon();
 
   this.Modifiers = {
-    Speed: 0
+    Speed: 0,
+    WalkSpeed: 0,
   }
 
   this.Texture = loadedImages.characters.default.idle;
@@ -405,6 +420,11 @@ function Player() {
         self.ShieldTick = self.ShieldCooldown;
       }
     }
+    self.Upgrades.forEach(element => {
+      if (element.Step) {
+        element.Step(self);
+      }
+    });
   }
 
   this.GiveXP = function(self, amount) {
@@ -443,10 +463,10 @@ function Enemy() {
   }
 
   this.Step = function(self) {
-    self.Velocity = new THREE.Vector2(
+    self.Velocity.lerp(new THREE.Vector2(
       Game.Player.Position.x-self.Position.x,
       Game.Player.Position.y-self.Position.y
-    ).normalize().multiplyScalar(self.Speed);
+    ).normalize().multiplyScalar(self.Speed), .1);
   }
 
   this.OnDeath = function(self) {
@@ -464,11 +484,14 @@ function Projectile() {
   this.Hitbox.Size = new THREE.Vector2(15, 15);
   this.Damage = 15;
   this.Pierces = 0;
+  this.Knockback = 125;
+
+  this.LifeTime = 3;
 
   this.Attack = function(self, target) {
 
     createHitEffect(self.Position)
-    target.Hit(target, self.Damage);
+    target.Hit(target, self.Damage, new THREE.Vector2(self.Velocity.x, self.Velocity.y).normalize().multiplyScalar(self.Knockback));
 
     if (self.Pierces == 0) {
       let index = Game.Projectiles.indexOf(self);
@@ -482,11 +505,13 @@ function ProjectileConstructor() {
   this.Size = new THREE.Vector2(15, 15);
   this.Speed = 750;
   this.Damage = 15;
+  this.Knockback = 50;
 
   this.Modifiers = {
     Damage: 0,
     Speed: 0,
     Size: 0,
+    Knockback: 0
   }
 
   this.Create = function(self) {
@@ -495,6 +520,7 @@ function ProjectileConstructor() {
     p.Size = new THREE.Vector2(self.Size.width * (1+(self.Size.width/100)), self.Size.height * (1+(self.Size.height/100)));
     p.Speed = self.Speed + (self.Modifiers.Speed*self.Speed)/100;
     p.Damage = self.Damage + (self.Modifiers.Damage*self.Damage)/100;
+    p.Knockback = self.Knockback * (1+(self.Modifiers.Knockback)/100);
 
     Game.Projectiles.push(p);
     return p
@@ -514,6 +540,8 @@ function Weapon() {
   this.ProjectileCount = 1;
   this.Spread = 0;
   this.AutoSpread = false;
+
+  this.Attacking = false;
 
   this.Modifiers = {
     FireRate: 0,
@@ -585,7 +613,7 @@ function Weapon() {
       const dirx = (Mouse.Position.x-canvas.width/2);
       const diry = (Mouse.Position.y-canvas.height/2);
       const aimAngle = Math.atan2(dirx, diry);
-      let spread = self.AutoSpread ? Math.PI*2 : Math.PI / (100/self.Spread);
+      let spread = self.AutoSpread ? Math.PI*2 : Math.PI / (180/self.Spread);
       const angleIncrement = self.ProjectileCount > 1 ? spread / (self.ProjectileCount) : 0;
       const initialAngle = (self.ProjectileCount > 1 ? -spread / 2 : 0) + aimAngle;
 
@@ -627,6 +655,8 @@ function Weapon() {
     if (Mouse.ButtonM1) {
       self.Attack(self);
     }
+
+    self.Attacking = (self.Ammo > 0) && (Mouse.ButtonM1);
 
     self.Draw(self);
   }
@@ -716,7 +746,7 @@ function movePlayer(player = Game.Player) {
   player.Velocity = new THREE.Vector2(
     Input.Right ? 1 : Input.Left ? -1 : 0,
     Input.Up ? -1 : Input.Down ? 1 : 0
-  ).normalize().multiplyScalar(player.Speed + (player.Speed*player.Modifiers.Speed)/100);
+  ).normalize().multiplyScalar(player.Speed * (1+(player.Modifiers.Speed)/100) - (player.Weapon.Attacking==true ? player.Speed/2*(1-player.Modifiers.WalkSpeed/100) : 0));
 }
 
 function move(object) {
@@ -725,6 +755,13 @@ function move(object) {
   }
   if (object.InmunityTick) {
     object.InmunityTick = Math.max(object.InmunityTick-Game.DeltaTime, 0);
+  }
+  if (object.LifeTime) {
+    object.LifeTime -= Game.DeltaTime;
+    let index = Game.Projectiles.indexOf(object);
+    if (object.LifeTime <= 0) {
+      Game.Projectiles.splice(index, 1);
+    }
   }
   if (object.Step) {
     object.Step(object);
@@ -748,12 +785,17 @@ function moveObjects() {
 }
 
 function drawGui(object) {
+  ctx.save();
+  if (object.Alpha) {
+    ctx.globalAlpha = object.Alpha; // Set the transparency for the background images
+  }
   ctx.drawImage(object.Texture,
     object.Position.x - object.Size.width/2 + ctx.canvas.width/2,
     object.Position.y - object.Size.height/2 + ctx.canvas.height/2,
     object.Size.width,
     object.Size.height
   );
+  ctx.restore();
 }
 
 function draw(object) {
